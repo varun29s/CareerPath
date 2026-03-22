@@ -1,14 +1,16 @@
+
 const express = require("express");
 const mongoose = require("mongoose");
 const cors = require("cors");
 require("dotenv").config();   // ← write here
 
 const studentRoute = require("./routes/studentRoute");
-
+const companyRoute = require("./routes/companyRoute");
 const app = express();
 
 app.use(cors());
 app.use(express.json());
+app.use("/company", companyRoute);
 
 app.use("/student", studentRoute);
 
