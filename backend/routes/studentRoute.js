@@ -37,9 +37,22 @@ router.get("/eligibility/:id", async (req, res) => {
    const scoredCompanies = eligibleCompanies.map(company => ({
   companyName: company.companyName,
   score: Math.floor(Math.random() * 20) + 80
-}));
 
-res.json(scoredCompanies);
+  
+}));
+const suggestions = companies
+  .filter(company => !eligibleCompanies.includes(company))
+  .map(company => ({
+    companyName: company.companyName,
+    missingSkills: company.requiredSkills.filter(
+      skill => !student.skills.includes(skill)
+    )
+  }));
+
+res.json({
+  eligible: scoredCompanies,
+  suggestions
+});
   } catch (error) {
     res.send(error);
   }
