@@ -29,26 +29,32 @@ function App() {
 
   const handleSubmit = async () => {
     try {
+      const cleanedSkills = student.skills
+        .split(",")
+        .map(skill => skill.trim())
+        .filter(skill => skill !== "");
+
       const response = await axios.post("http://localhost:5000/student/add", {
         ...student,
         cgpa: Number(student.cgpa),
         backlogs: Number(student.backlogs),
-        skills: student.skills.split(",")
+        skills: cleanedSkills
       });
 
       const id = response.data._id;
 
       const result = await axios.get(`http://localhost:5000/student/eligibility/${id}`);
-      
-setEligibleCompanies(result.data.eligible || []);
-setSuggestions(result.data.suggestions || []);
+
+      setEligibleCompanies(result.data.eligible || []);
+      setSuggestions(result.data.suggestions || []);
 
       let calculatedScore =
         Number(student.cgpa) * 10 +
-        student.skills.split(",").length * 10 -
+        cleanedSkills.length * 10 -
         Number(student.backlogs) * 5;
 
       if (calculatedScore > 100) calculatedScore = 100;
+      if (calculatedScore < 0) calculatedScore = 0;
 
       setScore(calculatedScore);
 
@@ -65,14 +71,20 @@ setSuggestions(result.data.suggestions || []);
       <input name="name" placeholder="Name" onChange={handleChange} />
       <input name="cgpa" placeholder="CGPA" onChange={handleChange} />
       <input name="branch" placeholder="Branch" onChange={handleChange} />
-      <input name="skills" placeholder="Skills comma separated" onChange={handleChange} />
+
+      <input
+        name="skills"
+        placeholder="skills"
+        onChange={handleChange}
+      />
+
       <input name="backlogs" placeholder="Backlogs" onChange={handleChange} />
 
-      <button onClick={handleSubmit}>Submit</button>
+      <button onClick={handleSubmit}>Check Eligibility</button>
 
       <h2>Placement Readiness Score: {score}%</h2>
 
-      <h2>Eligible Companies:</h2>
+      <h2>Eligible Companies</h2>
       <ul>
         {(eligibleCompanies || []).map((company, index) => (
           <li key={index}>
@@ -90,7 +102,7 @@ setSuggestions(result.data.suggestions || []);
       <ul>
         {companies
           .filter(company =>
-            company.companyName.toLowerCase().includes(search.toLowerCase())
+            (company.companyName || "").toLowerCase().includes(search.toLowerCase())
           )
           .map((company, index) => (
             <li key={index}>{company.companyName}</li>
