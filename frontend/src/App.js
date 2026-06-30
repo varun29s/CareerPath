@@ -2,6 +2,8 @@ import { useState, useEffect } from "react";
 import axios from "axios";
 import "./App.css";
 
+const API_URL = process.env.REACT_APP_API_URL;
+
 function App() {
   const [score, setScore] = useState(0);
   const [companies, setCompanies] = useState([]);
@@ -14,13 +16,14 @@ function App() {
     cgpa: "",
     branch: "",
     skills: "",
-    backlogs: ""
+    backlogs: "",
   });
 
   useEffect(() => {
-    axios.get("http://localhost:5000/company/all")
-      .then(res => setCompanies(res.data))
-      .catch(err => console.log(err));
+    axios
+      .get(`${API_URL}/company/all`)
+      .then((res) => setCompanies(res.data))
+      .catch((err) => console.log(err));
   }, []);
 
   const handleChange = (e) => {
@@ -31,19 +34,21 @@ function App() {
     try {
       const cleanedSkills = student.skills
         .split(",")
-        .map(skill => skill.trim())
-        .filter(skill => skill !== "");
+        .map((skill) => skill.trim())
+        .filter((skill) => skill !== "");
 
-      const response = await axios.post("http://localhost:5000/student/add", {
+      const response = await axios.post(`${API_URL}/student/add`, {
         ...student,
         cgpa: Number(student.cgpa),
         backlogs: Number(student.backlogs),
-        skills: cleanedSkills
+        skills: cleanedSkills,
       });
 
       const id = response.data._id;
 
-      const result = await axios.get(`http://localhost:5000/student/eligibility/${id}`);
+      const result = await axios.get(
+        `${API_URL}/student/eligibility/${id}`
+      );
 
       setEligibleCompanies(result.data.eligible || []);
       setSuggestions(result.data.suggestions || []);
@@ -57,7 +62,6 @@ function App() {
       if (calculatedScore < 0) calculatedScore = 0;
 
       setScore(calculatedScore);
-
     } catch (error) {
       console.log(error);
       alert("Error sending data");
@@ -68,19 +72,39 @@ function App() {
     <div className="container">
       <h1>CareerPath AI</h1>
 
-      <input name="name" placeholder="Name" onChange={handleChange} />
-      <input name="cgpa" placeholder="CGPA" onChange={handleChange} />
-      <input name="branch" placeholder="Branch" onChange={handleChange} />
-
       <input
-        name="skills"
-        placeholder="skills"
+        name="name"
+        placeholder="Name"
         onChange={handleChange}
       />
 
-      <input name="backlogs" placeholder="Backlogs" onChange={handleChange} />
+      <input
+        name="cgpa"
+        placeholder="CGPA"
+        onChange={handleChange}
+      />
 
-      <button onClick={handleSubmit}>Check Eligibility</button>
+      <input
+        name="branch"
+        placeholder="Branch"
+        onChange={handleChange}
+      />
+
+      <input
+        name="skills"
+        placeholder="Skills (comma separated)"
+        onChange={handleChange}
+      />
+
+      <input
+        name="backlogs"
+        placeholder="Backlogs"
+        onChange={handleChange}
+      />
+
+      <button onClick={handleSubmit}>
+        Check Eligibility
+      </button>
 
       <h2>Placement Readiness Score: {score}%</h2>
 
@@ -101,8 +125,10 @@ function App() {
       <h2>Available Companies</h2>
       <ul>
         {companies
-          .filter(company =>
-            (company.companyName || "").toLowerCase().includes(search.toLowerCase())
+          .filter((company) =>
+            (company.companyName || "")
+              .toLowerCase()
+              .includes(search.toLowerCase())
           )
           .map((company, index) => (
             <li key={index}>{company.companyName}</li>
